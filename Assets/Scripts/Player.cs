@@ -1,60 +1,44 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+
 
 public class Player : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 7f;
-    [SerializeField] private float rotationSpeed = 10f; // Dönüþ hýzý (Slerp için)
-    public bool isWalking; // Yürüme durumunu takip etmek için bir deðiþken
+    [SerializeField] private float rotationSpeed = 10f;
+    [SerializeField] private GameInput gameInput;
+    public bool isWalking;
 
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        
     }
 
-    // Update is called once per frame
     void Update()
     {
-        Vector2 inputVector = new Vector2(0, 0);
+        if (gameInput == null)
+        {
+            Debug.LogError("GameInput referansý atanmadý!");
+            return;
+        }
 
-        if (Input.GetKey(KeyCode.W))
-        {
-            inputVector.y += 1;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            inputVector.y -= 1;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            inputVector.x -= 1;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            inputVector.x += 1;
-        }
+        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
 
         Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y).normalized;
 
-        // Hareketi uygula
         transform.position += moveDir * moveSpeed * Time.deltaTime;
-        isWalking = moveDir != Vector3.zero; // Hareket varsa yürüme durumunu true yap, yoksa false
-        // Karakterin hareket yönüne bakmasýný saðla
-        if (moveDir != Vector3.zero) // Hareket varsa dönüþ yap
+        isWalking = moveDir != Vector3.zero;
+        if (moveDir != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
-
     }
+
     public bool IsWalking()
     {
-        
-        return isWalking; // Bu örnekte, isWalking deðiþkeni hareket durumunu takip eder.
-
+        return isWalking;
     }
-
-
 }
-
