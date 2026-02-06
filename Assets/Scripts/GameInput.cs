@@ -4,26 +4,20 @@ using System.Collections.Generic;
 
 public class GameInput : MonoBehaviour
 {
+    private PlayerInputAction PlayerInputActions;
+    private void Awake()
+    {
+        PlayerInputActions = new PlayerInputAction();
+        PlayerInputActions.Player.Enable();
+    }
     public Vector2 GetMovementVectorNormalized()
     {
-        Vector2 inputVector = new Vector2(0, 0);
-        if (Input.GetKey(KeyCode.W))
-        {
-            inputVector.y += 1;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            inputVector.y -= 1;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            inputVector.x -= 1;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            inputVector.x += 1;
-        }
-        return inputVector.normalized; // Giriþ vektörünü normalize ederek döndür
+       
+            Vector2 inputVector = PlayerInputActions.Player.Move.ReadValue<Vector2>();
+            inputVector = inputVector.normalized; // Giriþ vektörünü normalize et
+        
+       
+        return inputVector;
     }
 
 
