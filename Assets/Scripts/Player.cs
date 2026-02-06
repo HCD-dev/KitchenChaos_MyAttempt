@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public float moveSpeed = 7f;
+    [SerializeField] private float moveSpeed = 7f;
+    [SerializeField] private float rotationSpeed = 10f; // Dönüþ hýzý (Slerp için)
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -32,11 +33,16 @@ public class Player : MonoBehaviour
             inputVector.x += 1;
         }
 
-
         Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y).normalized;
-        Vector3 moveAmount = moveDir * moveSpeed * Time.deltaTime;
 
-        // Hareketi uyguluyoruz
-        transform.Translate(moveAmount, Space.World);
+        // Hareketi uygula
+        transform.position += moveDir * moveSpeed * Time.deltaTime;
+
+        // Karakterin hareket yönüne bakmasýný saðla
+        if (moveDir != Vector3.zero) // Hareket varsa dönüþ yap
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
     }
 }
