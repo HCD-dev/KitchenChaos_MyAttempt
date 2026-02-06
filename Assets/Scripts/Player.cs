@@ -4,11 +4,13 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float rotationSpeed = 10f; // Dönüþ hýzý (Slerp için)
+    public bool isWalking; // Yürüme durumunu takip etmek için bir deðiþken
 
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -37,12 +39,22 @@ public class Player : MonoBehaviour
 
         // Hareketi uygula
         transform.position += moveDir * moveSpeed * Time.deltaTime;
-
+        isWalking = moveDir != Vector3.zero; // Hareket varsa yürüme durumunu true yap, yoksa false
         // Karakterin hareket yönüne bakmasýný saðla
         if (moveDir != Vector3.zero) // Hareket varsa dönüþ yap
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
+
     }
+    public bool IsWalking()
+    {
+        
+        return isWalking; // Bu örnekte, isWalking deðiþkeni hareket durumunu takip eder.
+
+    }
+
+
 }
+
