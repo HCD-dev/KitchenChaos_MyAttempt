@@ -2,68 +2,98 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
+using System;
 
 
 
 public class Player : MonoBehaviour
 {
+    
+    public static Player Instance { get; private set; }
+
+    public event EventHandler<OnSelectedCounterChangedEventArgs> OnSelectedCounterChanged;
+    public class OnSelectedCounterChangedEventArgs : EventArgs
+    {
+        public ClearCounter selectedCounter;
+    }
+
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private GameInput gameInput;
     [SerializeField] private LayerMask counterLayerMask;
     public bool isWalking;
     private Vector3 lastInteractDir;
+    private ClearCounter selectedCounter;
 
+    public void Awake()
+    {
+        if (Instance != null)
+        {
+            Debug.LogError("Birden fazla Player instance'ý var!");
+        }
+        Instance = this;
+
+    }
     void Start()
     {
-        
+        gameInput.OnInteractAction += GameInput_OnInteractAction;
+
+    }
+    private void GameInput_OnInteractAction(object sender, System.EventArgs e)
+    {
+       if (selectedCounter != null)
+        {
+            selectedCounter.Interact();
+        }
     }
 
     void Update()
     {
-        if (gameInput == null)
-        {
-            Debug.LogError("GameInput referansý atanmadý!");
-            return;
-        }
         HandleMovement();
         HandleInteraction();
+
     }
 
-        
+
     public bool IsWalking()
     {
         return isWalking;
     }
     private void HandleInteraction()
-    {
-        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
+    {        // Raycast yönü normalize et - bu kritik!
+        Vector3 rayDirection = lastInteractDir.normalized;
 
-
-        Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
-        if (moveDir != Vector3.zero)
+        // Eðer yön sýfýrsa raycast yapma
+        if (rayDirection == Vector3.zero)
         {
-            lastInteractDir = moveDir;
+       
+            return;
+        }
+
+        float interactionDistance = 2f;
+        if (Physics.Raycast(transform.position, rayDirection, out RaycastHit raycastHit, interactionDistance, counterLayerMask))
+        {
+            
+
+            if (raycastHit.transform.TryGetComponent(out ClearCounter clearCounter))
+            {
+                
+
+                if (clearCounter != selectedCounter)
+                {
+                    SetSelectedCounter(clearCounter);
+                }
+            }
+            else
+            {
+                SetSelectedCounter(null);
+            }
+        }
+        else
+        {
+            SetSelectedCounter(null);
         }
         
-        float interactionDistance = 2f;
-        if (Physics.Raycast(transform.position, lastInteractDir, out RaycastHit raycastHit, interactionDistance, counterLayerMask))
-        {
-            if (raycastHit.transform.TryGetComponent(out ClearCounter clearCounter))
-                        {
-
-                clearCounter.Interact();
-
-            }
-
-
-
-        }
-        else {
-            Debug.Log("-");
-
-        }
-
     }
 
     private void HandleMovement()
@@ -72,6 +102,13 @@ public class Player : MonoBehaviour
 
 
         Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y).normalized;
+
+        // lastInteractDir'i her hareket güncellemesinde güncelle
+        if (moveDir != Vector3.zero)
+        {
+            lastInteractDir = moveDir;
+        }
+
         float moveDistance = moveSpeed * Time.deltaTime;
         float playerRadius = .7f;
         float playerHeight = 2f;
@@ -94,8 +131,6 @@ public class Player : MonoBehaviour
                 if (canMove)
                 {
                     moveDir = moveDirZ;
-
-
                 }
                 else
                 {
@@ -116,13 +151,18 @@ public class Player : MonoBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(moveDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
-    
 
 
 
-}
 
+    }
+    private void SetSelectedCounter(ClearCounter selectedCounter)
+    {
+        this.selectedCounter = selectedCounter;
+        
+        OnSelectedCounterChanged?.Invoke(this, new OnSelectedCounterChangedEventArgs
+        { selectedCounter = selectedCounter });
 
-
+    }
 
 }
